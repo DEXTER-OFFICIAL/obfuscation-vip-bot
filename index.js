@@ -78,7 +78,6 @@ async function obfuscateAndSend(ctx, code, name) {
             stringCompression: true, // Compress strings
             duplicateLiteralsRemoval: 1.0, // Remove duplicate values
             shuffle: { hash: 1.0, true: 1.0 }, // Randomize statements
-            stack: true, // Stack variable protection
             controlFlowFlattening: 1.0, // Make logic harder to understand
             opaquePredicates: 0.9, // Add fake conditions
             deadCode: 0.8, // Insert fake code paths
