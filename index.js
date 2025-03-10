@@ -26,21 +26,36 @@ bot.start((ctx) => {
 });
 
 // Obfuscation Command
-bot.command('obfuscate', async (ctx) => {
+bot.command('obfuscate', (ctx) => {
     ctx.reply('📂 කරුණාකර .js ගොනුවක් යවන්න!');
     logActivity(ctx.from.username, 'Requested obfuscation');
-    ctx.reply('📝 කරුණාකර ඔබේ කැමති නමක් ලබා දෙන්න:');
+});
+
+// Handle File Upload
+bot.on('document', async (ctx) => {
+    const file = ctx.message.document;
+
+    // Check if the file is a JavaScript file
+    if (file.file_name.endsWith('.js')) {
+        const fileLink = await ctx.telegram.getFileLink(file.file_id);
+        const response = await fetch(fileLink.href);
+        const code = await response.text();
+
+        // Store the code in the session
+        ctx.session = { code };
+
+        // Ask for the user's preferred name
+        ctx.reply('📝 කරුණාකර ඔබේ කැමති නමක් ලබා දෙන්න:');
+    } else {
+        ctx.reply('❌ අවලංගු ගොනු වර්ගය. කරුණාකර .js ගොනුවක් යවන්න.');
+    }
 });
 
 // Handle Name Input
 bot.on('text', async (ctx) => {
-    const userName = ctx.message.text;  // Get user input (preferred name)
-
-    // Check if the user has sent a file
-    if (ctx.message.document) {
-        const fileLink = await ctx.telegram.getFileLink(ctx.message.document.file_id);
-        const response = await fetch(fileLink.href);
-        const code = await response.text();
+    if (ctx.session && ctx.session.code) {
+        const userName = ctx.message.text; // Get user input (preferred name)
+        const code = ctx.session.code;
 
         ctx.reply('🔄 Obfuscation පටන් ගන්නවා...');
 
@@ -75,8 +90,11 @@ bot.on('text', async (ctx) => {
 
         await ctx.replyWithDocument({ source: Buffer.from(obfuscatedCode), filename: 'obfuscated_code.js' });
         logActivity(ctx.from.username, 'Sent obfuscated file');
+
+        // Clear the session
+        ctx.session = null;
     } else {
-        ctx.reply('❌ .js ගොනුවක් ලබා දී නැත. කරුණාකර .js ගොනුවක් යවන්න.');
+        ctx.reply('❌ කරුණාකර පළමුව .js ගොනුවක් යවන්න.');
     }
 });
 
