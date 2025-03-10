@@ -28,24 +28,43 @@ bot.on('document', async (ctx) => {
         const response = await fetch(fileLink.href);
         const code = await response.text();
 
-        // Store the code in the session
-        ctx.session = { code };
+        // Extract the caption (if provided)
+        const caption = ctx.message.caption;
 
-        // Ask for the user's preferred name
-        ctx.reply('📝 කරුණාකර ඔබේ කැමති නමක් ලබා දෙන්න:');
+        // If no caption is provided, ask for a name
+        if (!caption) {
+            ctx.reply('📝 කරුණාකර ඔබේ කැමති නමක් ලබා දෙන්න:');
+            // Store the code in the session and wait for the name
+            ctx.session = { code };
+        } else {
+            // Use the caption as the name and proceed with obfuscation
+            ctx.reply('🔄 Obfuscation පටන් ගන්නවා...');
+            obfuscateAndSend(ctx, code, caption);
+        }
     } else {
         ctx.reply('❌ අවලංගු ගොනු වර්ගය. කරුණාකර .js ගොනුවක් යවන්න.');
     }
 });
 
-// Handle Name Input
+// Handle Name Input (if no caption was provided)
 bot.on('text', async (ctx) => {
     if (ctx.session && ctx.session.code) {
         const userName = ctx.message.text; // Get user input (preferred name)
         const code = ctx.session.code;
 
-        ctx.reply('🔄 Obfuscation පටන් ගන්නවා...');
+        // Proceed with obfuscation using the provided name
+        obfuscateAndSend(ctx, code, userName);
 
+        // Clear the session
+        ctx.session = null;
+    } else {
+        ctx.reply('❌ කරුණාකර පළමුව .js ගොනුවක් යවන්න.');
+    }
+});
+
+// Function to handle obfuscation and sending the file
+async function obfuscateAndSend(ctx, code, name) {
+    try {
         // Obfuscation Settings with User's Name as Identifier
         const obfuscatedCode = await JsConfuser.obfuscate(code, {
             target: 'node',
@@ -70,19 +89,18 @@ bot.on('text', async (ctx) => {
             globalConcealing: true, // Hide global variables
             calculator: true, // Transform expressions into complex calculations
             identifierGenerator: function () {
-                const baseString = userName; // Use the user's provided name
+                const baseString = name; // Use the provided name (caption or user input)
                 return baseString + Date.now().toString(36); // Combine it with a timestamp
             }
         });
 
+        // Send the obfuscated file back to the user
         await ctx.replyWithDocument({ source: Buffer.from(obfuscatedCode), filename: 'obfuscated_code.js' });
-
-        // Clear the session
-        ctx.session = null;
-    } else {
-        ctx.reply('❌ කරුණාකර පළමුව .js ගොනුවක් යවන්න.');
+    } catch (error) {
+        console.error('Error during obfuscation:', error);
+        ctx.reply('❌ Obfuscation ප්‍රශ්නයක් ඇති විය. කරුණාකර නැවත උත්සාහ කරන්න.');
     }
-});
+}
 
 // Express Server for Bot Runtime Tracking
 app.get('/', (req, res) => {
