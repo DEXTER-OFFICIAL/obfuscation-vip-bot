@@ -1,0 +1,19 @@
+{
+  "name": "js-obfuscation-bot",
+  "version": "1.0.0",
+  "description": "A Telegram bot for obfuscating JavaScript files with user-provided names.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.1",
+    "fetch": "^1.1.0",
+    "js-confuser": "^2.0.0",
+    "telegraf": "^4.16.3",
+    "node-fetch": "^2.6.1"
+  },
+  "devDependencies": {},
+  "author": "Your Name",
+  "license": "MIT"
+}
