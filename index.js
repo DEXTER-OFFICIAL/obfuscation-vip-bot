@@ -7,28 +7,15 @@ const fetch = require('node-fetch');
 const bot = new Telegraf('7928858550:AAHN1UmdI2jgigwMXr6FUB0uOwUt0ZKn_gI');
 const app = express();
 const startTime = Date.now();
-const LOG_FILE = 'bot_log.json';
-
-// Logging Function
-function logActivity(user, action) {
-    let logs = [];
-    if (fs.existsSync(LOG_FILE)) {
-        logs = JSON.parse(fs.readFileSync(LOG_FILE));
-    }
-    logs.push({ user, action, timestamp: new Date().toISOString() });
-    fs.writeFileSync(LOG_FILE, JSON.stringify(logs, null, 2));
-}
 
 // Bot Start Message
 bot.start((ctx) => {
     ctx.reply('👋 ආයුබෝවන්! .js file obfuscate කිරීමට `/obfuscate` command එක භාවිතා කරන්න.');
-    logActivity(ctx.from.username, 'Started bot');
 });
 
 // Obfuscation Command
 bot.command('obfuscate', (ctx) => {
     ctx.reply('📂 කරුණාකර .js ගොනුවක් යවන්න!');
-    logActivity(ctx.from.username, 'Requested obfuscation');
 });
 
 // Handle File Upload
@@ -89,7 +76,6 @@ bot.on('text', async (ctx) => {
         });
 
         await ctx.replyWithDocument({ source: Buffer.from(obfuscatedCode), filename: 'obfuscated_code.js' });
-        logActivity(ctx.from.username, 'Sent obfuscated file');
 
         // Clear the session
         ctx.session = null;
@@ -102,15 +88,6 @@ bot.on('text', async (ctx) => {
 app.get('/', (req, res) => {
     const uptime = (Date.now() - startTime) / 1000;
     res.json({ status: 'Bot Running', uptime: `${uptime} seconds` });
-});
-
-// Show Logs via API
-app.get('/logs', (req, res) => {
-    if (fs.existsSync(LOG_FILE)) {
-        res.sendFile(__dirname + '/' + LOG_FILE);
-    } else {
-        res.json({ message: 'No logs yet' });
-    }
 });
 
 // Launch Bot & Server
